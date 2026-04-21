@@ -1,6 +1,6 @@
-# 灵境 SoulLens 7.0
+# AI-Game-Animation-Prompt-Tool / 灵境
 
-AI 驱动的分镜脚本生成工具 - React 版本
+AI 游戏动画提示词生成工具 - React 版本
 
 ## ✨ 功能特性
 

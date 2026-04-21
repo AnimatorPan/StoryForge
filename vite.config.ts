@@ -14,10 +14,22 @@ export default defineConfig({
     host: true,
   },
   esbuild: {
-    // 忽略未使用变量的警告
     logOverride: {
       'unused-import': 'silent',
       'unused-variable': 'silent',
     },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // 第三方库分离
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-zustand': ['zustand'],
+          'vendor-xlsx': ['xlsx'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   },
 })

@@ -1,4 +1,4 @@
-# AI-Game-Animation-Prompt-Tool / 灵境
+# StoryForge / 叙事熔炉
 
 AI 游戏动画提示词生成工具 - React 版本
 

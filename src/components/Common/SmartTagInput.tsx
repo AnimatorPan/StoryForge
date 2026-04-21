@@ -31,7 +31,6 @@ export function SmartTagInput({
 }: SmartTagInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showTagMenu, setShowTagMenu] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState(0);
   const [tagSearch, setTagSearch] = useState('');
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -39,7 +38,6 @@ export function SmartTagInput({
     const cursorPos = e.target.selectionStart || 0;
     
     onChange(newValue);
-    setCursorPosition(cursorPos);
     
     // 检测是否输入了 @
     const textBeforeCursor = newValue.slice(0, cursorPos);

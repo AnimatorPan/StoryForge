@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useProjectStore } from '../stores/projectStore';
-import { useAIStore } from '../stores/aiStore';
 
 interface ChainEngineState {
   isRunning: boolean;
@@ -28,7 +27,6 @@ interface UseChainEngineReturn {
 
 export function useChainEngine(): UseChainEngineReturn {
   const { shots, updateShot } = useProjectStore();
-  const { getActiveProvider, generateText } = useAIStore();
   
   const [state, setState] = useState<ChainEngineState>({
     isRunning: false,
@@ -58,12 +56,7 @@ export function useChainEngine(): UseChainEngineReturn {
   ) => {
     if (shotIds.length === 0) return;
     
-    const provider = getActiveProvider('text');
-    if (!provider) {
-      alert('请先配置 AI 提供商');
-      return;
-    }
-
+    // 模拟链式生成
     setState({
       isRunning: true,
       currentIndex: 0,
@@ -101,26 +94,26 @@ export function useChainEngine(): UseChainEngineReturn {
       }));
 
       try {
-        // 构建提示词生成请求
-        const prompt = buildChainPrompt(shot, promptType, i, shotIds.length);
+        // 模拟生成延迟
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // 调用 AI 生成
-        const result = await generateText(prompt, provider);
+        // 模拟生成结果
+        const mockResult = `[模拟生成] ${promptType} for shot ${shot.sequence}`;
         
         // 更新分镜
         const updateField = promptType === 'description' ? 'description' :
                            promptType === 'seedance' ? 'seedancePrompt' : 'dialogue';
-        updateShot(shotId, { [updateField]: result });
+        updateShot(shotId, { [updateField]: mockResult });
         
         results.push({
           shotId,
           success: true,
-          prompt: result,
+          prompt: mockResult,
         });
 
         // 添加延迟避免请求过快
         if (i < shotIds.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       } catch (error) {
         results.push({
@@ -140,7 +133,7 @@ export function useChainEngine(): UseChainEngineReturn {
       status: state.status === 'cancelled' ? 'cancelled' : 'completed',
       results,
     }));
-  }, [shots, getActiveProvider, generateText, updateShot, state.status]);
+  }, [shots, updateShot, state.status]);
 
   const pauseChain = useCallback(() => {
     setState(prev => ({ ...prev, status: 'paused' }));

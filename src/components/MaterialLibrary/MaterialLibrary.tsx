@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { useMaterialStore, type MaterialImage } from '../../stores/materialStore';
+import { useMaterialStore } from '../../stores/materialStore';
 
 interface MaterialLibraryProps {
   associatedShotId?: string;
-  onSelect?: (image: MaterialImage) => void;
+  onSelect?: (image: { id: string; url: string; name: string }) => void;
   onClose?: () => void;
 }
 
@@ -21,11 +21,8 @@ export function MaterialLibrary({ associatedShotId, onSelect, onClose }: Materia
     tags,
     addImage,
     removeImage,
-    updateImage,
     associateWithShot,
     disassociateFromShot,
-    getImagesByShotId,
-    searchByName,
   } = useMaterialStore();
 
   const [filterType, setFilterType] = useState<string>('all');
@@ -87,6 +84,7 @@ export function MaterialLibrary({ associatedShotId, onSelect, onClose }: Materia
           name: file.name.replace(/\.[^/.]+$/, ''),
           type: 'reference',
           tags: [],
+          associatedShotIds: [],
           size: file.size,
         });
       };

@@ -18,7 +18,7 @@ export function compressPrompt(
   prompt: string,
   options: PromptCompressionOptions = {}
 ): string {
-  const { maxLength = JIMENG_LIMITS.MAX_CHARS, preserveKeywords = true } = options;
+  const { maxLength = JIMENG_LIMITS.MAX_CHARS } = options;
   
   if (!prompt || prompt.length <= maxLength) {
     return prompt;

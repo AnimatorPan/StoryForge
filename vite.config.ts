@@ -13,4 +13,11 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
+  esbuild: {
+    // 忽略未使用变量的警告
+    logOverride: {
+      'unused-import': 'silent',
+      'unused-variable': 'silent',
+    },
+  },
 })

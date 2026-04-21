@@ -21,33 +21,19 @@ export interface MaterialLibrary {
 }
 
 interface MaterialStoreState extends MaterialLibrary {
-  // 添加图片
   addImage: (image: Omit<MaterialImage, 'id' | 'createdAt' | 'updatedAt'>) => string;
-  // 删除图片
   removeImage: (id: string) => void;
-  // 更新图片
   updateImage: (id: string, updates: Partial<MaterialImage>) => void;
-  // 关联分镜
   associateWithShot: (imageId: string, shotId: string) => void;
-  // 解除关联
   disassociateFromShot: (imageId: string, shotId: string) => void;
-  // 添加标签
   addTag: (tag: string) => void;
-  // 删除标签
   removeTag: (tag: string) => void;
-  // 获取图片
   getImageById: (id: string) => MaterialImage | undefined;
-  // 获取分镜关联的图片
   getImagesByShotId: (shotId: string) => MaterialImage[];
-  // 按类型获取图片
   getImagesByType: (type: MaterialImage['type']) => MaterialImage[];
-  // 按标签搜索
   searchByTags: (tags: string[]) => MaterialImage[];
-  // 搜索名称
   searchByName: (query: string) => MaterialImage[];
-  // 导入图片
   importImages: (images: Partial<MaterialImage>[]) => void;
-  // 导出图片
   exportImages: () => MaterialImage[];
 }
 
@@ -165,10 +151,15 @@ export const useMaterialStore = create<MaterialStoreState>()(
 
       importImages: (images) => {
         const newImages: MaterialImage[] = images.map((img) => ({
-          ...img,
-          id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          associatedShotIds: img.associatedShotIds || [],
+          url: img.url || '',
+          name: img.name || '',
+          type: img.type || 'reference',
           tags: img.tags || [],
+          associatedShotIds: img.associatedShotIds || [],
+          size: img.size,
+          width: img.width,
+          height: img.height,
+          id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           createdAt: Date.now(),
           updatedAt: Date.now(),
         }));

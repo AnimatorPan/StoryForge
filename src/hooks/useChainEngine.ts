@@ -27,6 +27,7 @@ interface UseChainEngineReturn {
 
 export function useChainEngine(): UseChainEngineReturn {
   const { shots, updateShot } = useProjectStore();
+  const getState = useProjectStore.getState;
   
   const [state, setState] = useState<ChainEngineState>({
     isRunning: false,
@@ -76,9 +77,16 @@ export function useChainEngine(): UseChainEngineReturn {
       }
 
       // 检查是否暂停
-      while (state.status === 'paused') {
+      while (true) {
+        // 使用闭包获取最新状态
+        let shouldBreak = false;
+        setState(prev => {
+          if (prev.status === 'cancelled') shouldBreak = true;
+          if (prev.status !== 'paused') shouldBreak = true;
+          return prev;
+        });
+        if (shouldBreak) break;
         await new Promise(resolve => setTimeout(resolve, 100));
-        if (state.status === 'cancelled') break;
       }
 
       const shotId = shotIds[i];

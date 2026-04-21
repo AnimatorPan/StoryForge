@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUIStore } from '../stores/uiStore';
+import { useUIStore } from './stores/uiStore';
 import { Header } from './components/Layout/Header';
 import { Sidebar } from './components/Layout/Sidebar';
 import { ShotTable } from './components/ShotTable/ShotTable';

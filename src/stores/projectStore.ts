@@ -8,6 +8,7 @@ interface ProjectState {
   shots: Shot[];
   selectedShotIds: string[];
   
+  // Actions
   addShot: (shot?: Partial<Shot>) => void;
   updateShot: (id: string, updates: Partial<Shot>) => void;
   deleteShot: (id: string) => void;
@@ -22,6 +23,9 @@ interface ProjectState {
   switchProject: (id: string) => void;
   deleteProject: (id: string) => void;
   renameProject: (id: string, name: string) => void;
+  
+  // Test helpers
+  resetProject: () => void;
 }
 
 export const useProjectStore = create<ProjectState>()(
@@ -211,6 +215,23 @@ export const useProjectStore = create<ProjectState>()(
             },
           },
         }));
+      },
+      
+      resetProject: () => {
+        set({
+          currentProjectId: 'default',
+          projects: {
+            default: {
+              id: 'default',
+              name: '默认项目',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              shotCount: 0,
+            },
+          },
+          shots: [],
+          selectedShotIds: [],
+        });
       },
     }),
     {

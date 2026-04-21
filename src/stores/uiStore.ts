@@ -12,7 +12,7 @@ interface UIState {
   setSidebarOpen: (open: boolean) => void;
   setGenerating: (generating: boolean) => void;
   setGenerationProgress: (progress: number) => void;
-  showToast: (message: string, type: UIState['toast']['type']) => void;
+  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
   hideToast: () => void;
 }
 

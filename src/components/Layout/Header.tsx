@@ -22,9 +22,9 @@ export function Header() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🎬</span>
-            <h1 className="text-xl font-bold text-gray-900">灵境 SoulLens</h1>
-            <span className="text-sm text-gray-500">7.0 链式引擎版</span>
+            <span className="text-2xl">🔥</span>
+            <h1 className="text-xl font-bold text-gray-900">StoryForge</h1>
+            <span className="text-sm text-gray-500">叙事熔炉</span>
           </div>
           
           <div className="h-6 w-px bg-gray-300 mx-2" />

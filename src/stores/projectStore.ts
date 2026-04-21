@@ -14,7 +14,7 @@ interface ProjectState {
   duplicateShot: (id: string) => void;
   moveShot: (fromIndex: number, toIndex: number) => void;
   
-  selectShot: (id: string, multi?: boolean) => void;
+  selectShot: (id: string | 'all' | 'none', multi?: boolean) => void;
   selectAll: () => void;
   clearSelection: () => void;
   
@@ -52,40 +52,53 @@ export const useProjectStore = create<ProjectState>()(
           drama: shot?.drama || '',
           dialogue: shot?.dialogue || '',
           seedancePrompt: shot?.seedancePrompt || '',
-          status: 'pending',
           createdAt: Date.now(),
           updatedAt: Date.now(),
-          ...shot,
         };
         
-        set({ 
-          shots: [...get().shots, newShot],
-        });
-        
-        get().updateProjectShotCount();
+        set((state) => ({
+          shots: [...state.shots, newShot],
+          projects: {
+            ...state.projects,
+            [state.currentProjectId]: {
+              ...state.projects[state.currentProjectId],
+              updatedAt: Date.now(),
+              shotCount: state.shots.length + 1,
+            },
+          },
+        }));
       },
       
       updateShot: (id, updates) => {
-        set({
-          shots: get().shots.map((s) =>
-            s.id === id ? { ...s, ...updates, updatedAt: Date.now() } : s
+        set((state) => ({
+          shots: state.shots.map((shot) =>
+            shot.id === id ? { ...shot, ...updates, updatedAt: Date.now() } : shot
           ),
-        });
+        }));
       },
       
       deleteShot: (id) => {
-        const newShots = get().shots.filter((s) => s.id !== id);
-        const reindexedShots = newShots.map((s, idx) => ({
-          ...s,
-          sequence: idx + 1,
-        }));
-        
-        set({
-          shots: reindexedShots,
-          selectedShotIds: get().selectedShotIds.filter((sid) => sid !== id),
+        set((state) => {
+          const newShots = state.shots.filter((shot) => shot.id !== id);
+          // 重新排序
+          const reorderedShots = newShots.map((shot, index) => ({
+            ...shot,
+            sequence: index + 1,
+          }));
+          
+          return {
+            shots: reorderedShots,
+            selectedShotIds: state.selectedShotIds.filter((sid) => sid !== id),
+            projects: {
+              ...state.projects,
+              [state.currentProjectId]: {
+                ...state.projects[state.currentProjectId],
+                updatedAt: Date.now(),
+                shotCount: reorderedShots.length,
+              },
+            },
+          };
         });
-        
-        get().updateProjectShotCount();
       },
       
       duplicateShot: (id) => {
@@ -96,47 +109,60 @@ export const useProjectStore = create<ProjectState>()(
           ...shot,
           id: `shot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           sequence: get().shots.length + 1,
-          status: 'pending',
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
         
-        set({ shots: [...get().shots, newShot] });
-        get().updateProjectShotCount();
+        set((state) => ({
+          shots: [...state.shots, newShot],
+          projects: {
+            ...state.projects,
+            [state.currentProjectId]: {
+              ...state.projects[state.currentProjectId],
+              updatedAt: Date.now(),
+              shotCount: state.shots.length + 1,
+            },
+          },
+        }));
       },
       
       moveShot: (fromIndex, toIndex) => {
-        const shots = [...get().shots];
-        const [moved] = shots.splice(fromIndex, 1);
-        shots.splice(toIndex, 0, moved);
-        
-        const reindexedShots = shots.map((s, idx) => ({
-          ...s,
-          sequence: idx + 1,
-        }));
-        
-        set({ shots: reindexedShots });
+        set((state) => {
+          const shots = [...state.shots];
+          const [moved] = shots.splice(fromIndex, 1);
+          shots.splice(toIndex, 0, moved);
+          
+          return {
+            shots: shots.map((shot, index) => ({
+              ...shot,
+              sequence: index + 1,
+            })),
+          };
+        });
       },
       
       selectShot: (id, multi = false) => {
         if (id === 'all') {
-          set({ selectedShotIds: get().shots.map((s) => s.id) });
+          set((state) => ({
+            selectedShotIds: state.shots.map((s) => s.id),
+          }));
         } else if (id === 'none') {
           set({ selectedShotIds: [] });
         } else if (multi) {
-          const current = get().selectedShotIds;
-          if (current.includes(id)) {
-            set({ selectedShotIds: current.filter((sid) => sid !== id) });
-          } else {
-            set({ selectedShotIds: [...current, id] });
-          }
+          set((state) => ({
+            selectedShotIds: state.selectedShotIds.includes(id)
+              ? state.selectedShotIds.filter((sid) => sid !== id)
+              : [...state.selectedShotIds, id],
+          }));
         } else {
           set({ selectedShotIds: [id] });
         }
       },
       
       selectAll: () => {
-        set({ selectedShotIds: get().shots.map((s) => s.id) });
+        set((state) => ({
+          selectedShotIds: state.shots.map((s) => s.id),
+        }));
       },
       
       clearSelection: () => {
@@ -145,9 +171,9 @@ export const useProjectStore = create<ProjectState>()(
       
       createProject: (name) => {
         const id = `proj_${Date.now()}`;
-        set({
+        set((state) => ({
           projects: {
-            ...get().projects,
+            ...state.projects,
             [id]: {
               id,
               name,
@@ -156,7 +182,7 @@ export const useProjectStore = create<ProjectState>()(
               shotCount: 0,
             },
           },
-        });
+        }));
         return id;
       },
       
@@ -165,39 +191,30 @@ export const useProjectStore = create<ProjectState>()(
       },
       
       deleteProject: (id) => {
-        if (id === 'default') return;
-        const { [id]: _, ...rest } = get().projects;
-        set({
-          projects: rest,
-          currentProjectId: 'default',
+        set((state) => {
+          const { [id]: _, ...remaining } = state.projects;
+          return {
+            projects: remaining,
+            currentProjectId: state.currentProjectId === id ? 'default' : state.currentProjectId,
+          };
         });
       },
       
       renameProject: (id, name) => {
-        set({
+        set((state) => ({
           projects: {
-            ...get().projects,
-            [id]: { ...get().projects[id], name, updatedAt: Date.now() },
-          },
-        });
-      },
-      
-      updateProjectShotCount: () => {
-        const currentId = get().currentProjectId;
-        set({
-          projects: {
-            ...get().projects,
-            [currentId]: {
-              ...get().projects[currentId],
-              shotCount: get().shots.length,
+            ...state.projects,
+            [id]: {
+              ...state.projects[id],
+              name,
               updatedAt: Date.now(),
             },
           },
-        });
+        }));
       },
     }),
     {
-      name: 'soullens-projects',
+      name: 'storyforge-projects',
     }
   )
 );

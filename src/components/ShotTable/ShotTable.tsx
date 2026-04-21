@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useProjectStore } from '../../stores/projectStore';
+import { SmartTagInput } from '../Common/SmartTagInput';
 import type { Shot, ShotColumn } from '../../types/shot';
 
 const COLUMNS: ShotColumn[] = [
@@ -13,6 +14,9 @@ const COLUMNS: ShotColumn[] = [
   { key: 'dialogue', label: '台词', width: '150px', editable: true, highlight: true },
   { key: 'seedancePrompt', label: 'SEEDANCE', width: '300px', editable: true, highlight: true },
 ];
+
+// 支持智能标签输入的列
+const COLUMNS_WITH_TAGS = ['description', 'dialogue', 'seedancePrompt', 'lighting', 'drama'];
 
 export function ShotTable() {
   const { shots, selectedShotIds, selectShot, updateShot, deleteShot, duplicateShot } = useProjectStore();
@@ -36,7 +40,8 @@ export function ShotTable() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleCellSave();
     } else if (e.key === 'Escape') {
       setEditingCell(null);
@@ -47,20 +52,102 @@ export function ShotTable() {
   const highlightTags = (text: string) => {
     if (!text) return text;
     
-    const tags: Record<string, string> = {
-      '@镜头': 'bg-tag-shot',
-      '@环境': 'bg-tag-env',
-      '@空间': 'bg-tag-space',
-      '@角色': 'bg-tag-character',
-      '@细节': 'bg-tag-detail',
-      '@光影': 'bg-tag-lighting',
-      '@音效': 'bg-tag-sound',
-      '@戏剧': 'bg-tag-drama',
-      '@台词': 'bg-tag-dialogue',
-      '@收尾': 'bg-tag-ending',
+    // 简单的标签高亮
+    const tagColors: Record<string, string> = {
+      '@人物': 'bg-blue-100 text-blue-700',
+      '@图片': 'bg-green-100 text-green-700',
+      '@道具': 'bg-yellow-100 text-yellow-700',
+      '@关键帧': 'bg-purple-100 text-purple-700',
+      '@场景': 'bg-indigo-100 text-indigo-700',
+      '@动作': 'bg-red-100 text-red-700',
+      '@表情': 'bg-pink-100 text-pink-700',
+      '@服装': 'bg-orange-100 text-orange-700',
+      '@特效': 'bg-cyan-100 text-cyan-700',
+      '@光照': 'bg-amber-100 text-amber-700',
+      '@视角': 'bg-teal-100 text-teal-700',
+      '@构图': 'bg-lime-100 text-lime-700',
     };
     
-    return text;
+    // 分割文本并渲染
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, index) => {
+      const colorClass = tagColors[part];
+      if (colorClass) {
+        return (
+          <span key={index} className={`inline-block px-1 rounded text-xs font-medium ${colorClass}`}>
+            {part}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
+  const renderCell = (shot: Shot, col: ShotColumn) => {
+    const isEditing = editingCell?.shotId === shot.id && editingCell?.key === col.key;
+    const value = shot[col.key] as string;
+    const shouldUseSmartInput = COLUMNS_WITH_TAGS.includes(col.key);
+
+    if (isEditing) {
+      if (shouldUseSmartInput) {
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <SmartTagInput
+              value={editValue}
+              onChange={setEditValue}
+              placeholder={`输入${col.label}...`}
+              rows={2}
+            />
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={handleCellSave}
+                className="px-3 py-1 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
+              >
+                保存
+              </button>
+              <button
+                onClick={() => {
+                  setEditingCell(null);
+                  setEditValue('');
+                }}
+                className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <input
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleCellSave}
+            onKeyDown={handleKeyDown}
+            className="w-full px-2 py-1 border border-primary-500 rounded focus:outline-none focus:ring-2 focus:ring-primary-200"
+            autoFocus
+          />
+        );
+      }
+    }
+
+    return (
+      <div
+        className={`min-h-[1.5rem] px-2 py-1 rounded cursor-pointer hover:bg-white hover:shadow-sm transition-all ${
+          col.highlight ? 'font-medium' : ''
+        }`}
+        title={value || '点击编辑'}
+      >
+        {col.key === 'sequence' ? (
+          <span className="font-mono text-gray-500">{shot.sequence}</span>
+        ) : (
+          <span className="text-gray-700 line-clamp-2">
+            {highlightTags(value)}
+          </span>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -104,46 +191,16 @@ export function ShotTable() {
                 />
               </td>
               
-              {COLUMNS.map((col) => {
-                const isEditing = editingCell?.shotId === shot.id && editingCell?.key === col.key;
-                const value = shot[col.key] as string;
-                
-                return (
-                  <td
-                    key={col.key}
-                    className={`p-2 border-r border-gray-100 ${col.highlight ? 'bg-gray-50/50' : ''}`}
-                    style={{ width: col.width, minWidth: col.width }}
-                    onClick={() => handleCellClick(shot.id, col.key, value)}
-                  >
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onBlur={handleCellSave}
-                        onKeyDown={handleKeyDown}
-                        className="w-full px-2 py-1 border border-primary-500 rounded focus:outline-none focus:ring-2 focus:ring-primary-200"
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        className={`min-h-[1.5rem] px-2 py-1 rounded cursor-pointer hover:bg-white hover:shadow-sm transition-all ${
-                          col.highlight ? 'font-medium' : ''
-                        }`}
-                        title={value || '点击编辑'}
-                      >
-                        {col.key === 'sequence' ? (
-                          <span className="font-mono text-gray-500">{shot.sequence}</span>
-                        ) : (
-                          <span className="text-gray-700 line-clamp-2">
-                            {highlightTags(value)}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                );
-              })}
+              {COLUMNS.map((col) => (
+                <td
+                  key={col.key}
+                  className={`p-2 border-r border-gray-100 ${col.highlight ? 'bg-gray-50/50' : ''}`}
+                  style={{ width: col.width, minWidth: col.width }}
+                  onClick={() => handleCellClick(shot.id, col.key, shot[col.key] as string)}
+                >
+                  {renderCell(shot, col)}
+                </td>
+              ))}
               
               <td className="p-2">
                 <div className="flex items-center gap-1">

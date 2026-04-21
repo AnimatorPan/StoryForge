@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { useProjectStore } from '../../stores/projectStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useExport } from '../../hooks/useExport';

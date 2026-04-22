@@ -10,6 +10,7 @@ export interface Shot {
   dialogue: string;
   seedancePrompt: string;
   generatedImage?: string;
+  previewUrl?: string;
   status?: 'pending' | 'generated' | 'error';
   createdAt: number;
   updatedAt: number;
